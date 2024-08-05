@@ -24,7 +24,6 @@ fn proof_kind(receipt: &risc0_zkvm::Receipt) -> String {
     match receipt.inner {
         risc0_zkvm::InnerReceipt::Composite(_) => "composite".into(),
         risc0_zkvm::InnerReceipt::Succinct(_) => "succinct".into(),
-        risc0_zkvm::InnerReceipt::Compact(_) => "compact".into(),
         risc0_zkvm::InnerReceipt::Fake { .. } => "fake".into(),
         _ => "unknown".into(),
     }

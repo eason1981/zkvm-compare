@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use sp1_core::runtime::SP1Context;
+use sp1_core::utils::SP1ProverOpts;
+use sp1_prover::components::DefaultProverComponents;
 use anyhow::{Context, Result};
 use common::*;
 use sp1_prover::{utils::get_cycles, SP1Prover, SP1Stdin};
@@ -52,6 +55,9 @@ where
         std::env::set_var("SHARD_SIZE", format!("{}", 1 << vm_args.segment_size));
     }
 
+    let ctx = SP1Context::default();
+    let opt = SP1ProverOpts::default();
+
     info!("Setting up stdin ...");
     let stdin = {
         let mut stdin = SP1Stdin::new();
@@ -65,7 +71,7 @@ where
 
     info!("Creating prover ...");
     let (prover, pk, vk) = metric::measure(&mut metrics.prover_create_millis, || {
-        let prover = SP1Prover::new();
+        let prover: SP1Prover<DefaultProverComponents> = SP1Prover::new();
         let (pk, vk) = prover.setup(ELF);
         Ok((prover, pk, vk))
     })?;
@@ -73,7 +79,7 @@ where
     info!("Running executor ...");
     {
         let mut session = metric::measure(&mut metrics.exec_millis, || {
-            Ok(SP1Prover::execute(ELF, &stdin))
+            Ok(SP1Prover::<DefaultProverComponents>::execute(ELF, &stdin, ctx.clone()).unwrap().0)
         })?;
 
         info!("  Reading session metadata ...");
@@ -88,7 +94,7 @@ where
     let proof = {
         info!("  Proving ...");
         let mut proof = metric::measure(&mut metrics.segmented_prove_millis, || {
-            Ok(prover.prove_core(&pk, &stdin))
+            Ok(prover.prove_core(&pk, &stdin, opt, ctx).unwrap())
         })?;
 
         info!("  Reading proof metadata ...");
@@ -126,7 +132,7 @@ where
     {
         info!("  Proving ...");
         let proof = metric::measure(&mut metrics.reduced_prove_millis, || {
-            Ok(prover.compress(&vk, proof, vec![]))
+            Ok(prover.compress(&vk, proof, vec![], opt).unwrap())
         })?;
 
         info!("  Reading proof metadata ...");
