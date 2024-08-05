@@ -6,4 +6,4 @@ edition = "2021"
 
 [dependencies]
 common = { path = "../common", features = ["sp1"] }
-sp1-zkvm = { git = "https://github.com/succinctlabs/sp1", rev = "ffe408a" }
+sp1-zkvm = { git = "https://github.com/succinctlabs/sp1" }
